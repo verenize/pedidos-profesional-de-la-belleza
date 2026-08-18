@@ -279,7 +279,7 @@ grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
 <img class="logo" src="LOGO+SLOGAN(NEGRO) (5).png" alt="Verenize">
 </div>
 <div class="header-fields">
-<input id="socio" placeholder="Socio comercial">
+<input id="estilista" placeholder="Nombre estilista">
 <input id="fecha" type="date">
 </div>
 <div class="total-card">
@@ -380,7 +380,6 @@ const grid = document.getElementById("productGrid");
 grid.innerHTML = "";
 
 productos.forEach((p,i)=>{
-// p[0]: Nombre, p[1]: Dist, p[2]: Sub, p[3]: Img, p[4]: Categoria, p[5]: Piezas por caja
 if(categoriaActual !== "Todos" && p[4] !== categoriaActual) return;
 if(filtro && !p[0].toLowerCase().includes(filtro)) return;
 
@@ -414,9 +413,10 @@ calcular();
 }
 
 function calcular(){
-let total = 0;
-let resumenHTML = "";
+let subtotalGeneral = 0;
+let itemsCalculados = [];
 
+// Paso 1: Calcular subtotales individuales por producto
 productos.forEach((p,i)=>{
 const cantEl = document.getElementById(`cantidad${i}`);
 const cajaEl = document.getElementById(`cajasInput${i}`);
@@ -445,15 +445,35 @@ descuentoTexto = " con 10% desc.";
 }
 }
 
-const importeEl = document.getElementById(`importe${i}`);
-if(importeEl) importeEl.innerText = importe.toFixed(2);
+subtotalGeneral += importe;
+itemsCalculados.push({ p, i, cantPzas, cantCajas, totalPiezas, importe, precioAplicado, descuentoTexto });
+});
 
-const tag = document.getElementById(`tag${i}`);
-const card = document.getElementById(`card${i}`);
+// Paso 2: Verificar si aplica el 15% de descuento general (si el subtotal pasa de 3500)
+let aplicaDescuentoGeneral = subtotalGeneral > 3500;
+let total = 0;
+let resumenHTML = "";
+
+itemsCalculados.forEach(item => {
+let importeFinal = item.importe;
+let descGeneralTexto = "";
+
+if (aplicaDescuentoGeneral && item.totalPiezas > 0) {
+importeFinal = item.importe * 0.85;
+descGeneralTexto = " + 15% desc. general";
+}
+
+total += importeFinal;
+
+const importeEl = document.getElementById(`importe${item.i}`);
+if(importeEl) importeEl.innerText = importeFinal.toFixed(2);
+
+const tag = document.getElementById(`tag${item.i}`);
+const card = document.getElementById(`card${item.i}`);
 if(tag && card){
-if(totalPiezas > 0){
-tag.className = "product-tag " + (precioAplicado === "Distribuidor" ? "tag-dist" : "tag-sub");
-tag.innerText = precioAplicado + (descuentoTexto ? " · 10% desc." : "");
+if(item.totalPiezas > 0){
+tag.className = "product-tag " + (item.precioAplicado === "Distribuidor" ? "tag-dist" : "tag-sub");
+tag.innerText = item.precioAplicado + (item.descuentoTexto ? " · 10% desc." : "") + (aplicaDescuentoGeneral ? " · 15% desc. gral" : "");
 card.classList.add("active");
 }else{
 tag.className = "product-tag";
@@ -462,19 +482,17 @@ card.classList.remove("active");
 }
 }
 
-if(totalPiezas > 0){
+if(item.totalPiezas > 0){
 resumenHTML += `
 <div class="item" style="display: flex; justify-content: space-between; align-items: center;">
 <div>
-<strong>${p[0]}</strong><br>
-Piezas: ${cantPzas} | Cajas: ${cantCajas} | Total piezas: ${totalPiezas}<br>
-Precio aplicado: ${precioAplicado}${descuentoTexto} | Total: $${importe.toFixed(2)}
+<strong>${item.p[0]}</strong><br>
+Piezas: ${item.cantPzas} | Cajas: ${item.cantCajas} | Total piezas: ${item.totalPiezas}<br>
+Precio aplicado: ${item.precioAplicado}${item.descuentoTexto}${descGeneralTexto} | Total: $${importeFinal.toFixed(2)}
 </div>
-<button onclick="eliminarItem('prod', ${i})" style="background:#ff4d4d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; font-size:12px; margin-left:10px; flex-shrink:0;" title="Quitar">×</button>
+<button onclick="eliminarItem('prod', ${item.i})" style="background:#ff4d4d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; font-size:12px; margin-left:10px; flex-shrink:0;" title="Quitar">×</button>
 </div>`;
 }
-
-total += importe;
 });
 
 if(resumenHTML === ""){
@@ -502,14 +520,28 @@ calcular();
 }
 
 function enviarWhatsapp(){
-let socio = document.getElementById("socio").value;
+let estilista = document.getElementById("estilista").value;
 let fecha = document.getElementById("fecha").value;
 let total = document.getElementById("total").innerText;
 let reembolso = document.getElementById("reembolsoArriba").innerText;
 
 let mensaje = `*Hola, quiero realizar este pedido Verenize:*%0A%0A`;
-mensaje += `*Socio comercial:* ${socio}%0A`;
+mensaje += `*Nombre estilista:* ${estilista}%0A`;
 mensaje += `*Fecha de pedido:* ${fecha}%0A%0A`;
+
+let subtotalCalculo = 0;
+productos.forEach((p,i)=>{
+let cantPzas = window["cant"+i] || 0;
+let cantCajas = window["caja"+i] || 0;
+let piezasPorCaja = p[5];
+let totalPiezas = cantPzas + (cantCajas * piezasPorCaja);
+if(totalPiezas > 0){
+let imp = totalPiezas >= piezasPorCaja ? totalPiezas * p[1] : totalPiezas * p[2] * (p[4] === "Línea de Mantenimiento" ? 0.9 : 1);
+subtotalCalculo += imp;
+}
+});
+
+let aplicaDescGral = subtotalCalculo > 3500;
 
 productos.forEach((p,i)=>{
 let cantPzas = window["cant"+i] || 0;
@@ -519,6 +551,8 @@ let totalPiezas = cantPzas + (cantCajas * piezasPorCaja);
 
 if(totalPiezas > 0){
 let importe = totalPiezas >= piezasPorCaja ? totalPiezas * p[1] : totalPiezas * p[2] * (p[4] === "Línea de Mantenimiento" ? 0.9 : 1);
+if(aplicaDescGral) importe = importe * 0.85;
+
 mensaje += `*Producto:* ${p[0]}%0A`;
 mensaje += `*Piezas capturadas:* ${cantPzas}%0A`;
 mensaje += `*Cajas capturadas:* ${cantCajas}%0A`;
@@ -528,6 +562,7 @@ mensaje += `*Importe:* $${importe.toFixed(2)}%0A%0A`;
 });
 
 mensaje += `*TOTAL ACUMULADO:* $${total}%0A`;
+if(aplicaDescGral) mensaje += `*(Incluye 15% de descuento por compra mayor a $3,500)*%0A`;
 mensaje += `*TOTAL REEMBOLSO:* $${reembolso}%0A%0A`;
 
 window.open(`https://wa.me/${whatsapp}?text=${mensaje}`,"_blank");
@@ -540,7 +575,7 @@ window["cant"+i] = 0;
 window["caja"+i] = 0;
 });
 document.getElementById("buscador").value = "";
-document.getElementById("socio").value = "";
+document.getElementById("estilista").value = "";
 document.getElementById("fecha").valueAsDate = new Date();
 categoriaActual = "Todos";
 render();
