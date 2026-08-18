@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedidos Verenize</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{
+box-sizing:border-box;
+font-family:'Montserrat',sans-serif;
+margin:0;
+padding:0;
+}
+body{
+background:#f4f4f2;
+padding-bottom:90px;
+}
+.header{
+background:linear-gradient(160deg,#f3c8ab 0%,#efb890 55%,#e9a875 100%);
+padding:20px 18px 22px;
+color:#5a331a;
+}
+.header-top{
+display:flex;
+justify-content:center;
+margin-bottom:14px;
+}
+.logo{
+width:220px;
+max-width:60%;
+height:auto;
+filter:brightness(0) invert(1);
+}
+.header-fields{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-bottom:14px;
+}
+.header-fields input{
+flex:1;
+min-width:140px;
+padding:10px 12px;
+border:none;
+border-radius:9px;
+font-size:14px;
+}
+.total-card{
+background:rgba(255,255,255,0.94);
+border-radius:14px;
+padding:12px 16px;
+}
+.total-card .label{
+font-size:11px;
+font-weight:700;
+letter-spacing:0.5px;
+opacity:0.7;
+text-transform:uppercase;
+}
+.total-card .amount{
+font-size:26px;
+font-weight:800;
+line-height:1.2;
+}
+.total-card .reembolso{
+font-size:12.5px;
+font-weight:600;
+margin-top:2px;
+opacity:0.85;
+}
+.search-wrap{
+padding:16px 16px 6px;
+}
+.buscador{
+width:100%;
+padding:12px 14px;
+border:1px solid #e4e2dd;
+border-radius:10px;
+font-size:15px;
+background:#fff;
+}
+.chips{
+display:flex;
+gap:8px;
+overflow-x:auto;
+padding:12px 16px 4px;
+}
+.chip{
+flex-shrink:0;
+padding:8px 15px;
+border-radius:20px;
+font-size:12.5px;
+font-weight:600;
+cursor:pointer;
+border:1px solid #eee;
+background:#fff;
+color:#777;
+white-space:nowrap;
+}
+.chip.active{
+background:#e9a875;
+color:#fff;
+border-color:#e9a875;
+}
+.section-title{
+padding:16px 16px 8px;
+font-size:15px;
+font-weight:700;
+color:#3a2416;
+}
+.product-list{
+padding:0 16px 8px;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+.product-card{
+display:flex;
+gap:12px;
+background:#fff;
+border:1px solid #eee;
+border-radius:14px;
+padding:12px;
+align-items:center;
+transition:background .15s,border-color .15s;
+}
+.product-card.active{
+background:#fff8f2;
+border-color:#e9a875;
+}
+.product-img{
+width:60px;
+height:60px;
+border-radius:10px;
+object-fit:contain;
+background:#f6f6f4;
+flex-shrink:0;
+}
+.product-info{
+flex:1;
+min-width:0;
+}
+.product-name{
+font-size:13.5px;
+font-weight:600;
+color:#2b2b2b;
+line-height:1.35;
+}
+.product-prices{
+font-size:11.5px;
+color:#999;
+margin-top:3px;
+}
+.product-tag{
+display:inline-block;
+margin-top:5px;
+font-size:9.5px;
+font-weight:700;
+padding:3px 8px;
+border-radius:6px;
+}
+.tag-dist{background:#e3f3e8;color:#2e7d4f;}
+.tag-sub{background:#fdeee0;color:#c1672b;}
+.qty-group{
+display:flex;
+gap:8px;
+}
+.qty-box{
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:3px;
+}
+.qty-box input{
+width:48px;
+height:32px;
+border:1px solid #ddd;
+border-radius:8px;
+text-align:center;
+font-size:13px;
+font-weight:600;
+}
+.qty-label{
+font-size:8.5px;
+color:#aaa;
+font-weight:600;
+}
+.importe-tag{
+font-size:12px;
+font-weight:700;
+color:#5a331a;
+text-align:right;
+margin-top:8px;
+}
+.resumen{
+margin:16px;
+padding:14px 16px;
+border:1px solid #eee;
+border-radius:12px;
+background:#fff;
+}
+.resumen h3{
+font-size:14px;
+font-weight:700;
+margin-bottom:8px;
+color:#3a2416;
+}
+.resumen .item{
+font-size:12.5px;
+color:#555;
+margin-bottom:8px;
+line-height:1.5;
+padding-bottom:8px;
+border-bottom:1px solid #f2f2f2;
+}
+.resumen .item:last-child{border-bottom:none;}
+.resumen .vacio{
+font-size:13px;
+color:#999;
+}
+.sticky-bar{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+background:#fff;
+border-top:1px solid #eee;
+padding:12px 16px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+z-index:50;
+}
+.sticky-total{
+font-size:12px;
+color:#777;
+}
+.sticky-total b{
+font-size:18px;
+color:#2b2b2b;
+display:block;
+}
+.sticky-actions{
+display:flex;
+gap:8px;
+}
+.btn{
+border:0;
+padding:12px 16px;
+border-radius:10px;
+font-size:13px;
+font-weight:700;
+cursor:pointer;
+}
+.btn-enviar{
+background:#25D366;
+color:#fff;
+}
+.btn-limpiar{
+background:#f1f1ef;
+color:#777;
+}
+@media(min-width:700px){
+.product-list{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="header-top">
+<img class="logo" src="LOGO+SLOGAN(NEGRO) (5).png" alt="Verenize">
+</div>
+<div class="header-fields">
+<input id="socio" placeholder="Socio comercial">
+<input id="fecha" type="date">
+</div>
+<div class="total-card">
+<div class="label">Total acumulado</div>
+<div class="amount">$<span id="totalArriba">0.00</span></div>
+<div class="reembolso">Reembolso estimado: $<span id="reembolsoArriba">0.00</span></div>
+</div>
+</div>
+
+<div class="search-wrap">
+<input type="text" id="buscador" class="buscador" placeholder="Buscar producto..." oninput="render()">
+</div>
+
+<div class="chips" id="chips"></div>
+
+<div id="productosSection">
+<div class="section-title">Productos</div>
+<div class="product-list" id="productGrid"></div>
+</div>
+
+<div class="resumen">
+<h3>Resumen del pedido</h3>
+<div id="resumenPedido"><div class="vacio">No hay productos seleccionados.</div></div>
+</div>
+
+<div class="sticky-bar">
+<div class="sticky-total">Total<br><b>$<span id="total">0.00</span></b></div>
+<div class="sticky-actions">
+<button class="btn btn-limpiar" onclick="limpiar()">Limpiar</button>
+<button class="btn btn-enviar" onclick="enviarWhatsapp()">Enviar pedido</button>
+</div>
+</div>
+
+<script>
+const whatsapp = "526624212850";
+const metaReembolso = 104400;
+
+const categorias = ["Todos","Línea Profesional","Vereplex pro","Línea de Mantenimiento","Hi-Style","Herramientas"];
+let categoriaActual = "Todos";
+
+/* Estructura: [nombre, precioDist, precioSub, piezasCaja, imagen, categoria] */
+const productos = [
+["Kit de Keratina Brasileña 1000 ml",2800,16,"Kit_proteina_1000ml.png","Línea Profesional", 16],
+["Kit de Keratina Brasileña 300 ml",1200,24,"Kit_proteina_300ml.png","Línea Profesional", 24],
+["Kit de Keratina Brasileña 100 ml",350,96,"Kit_proteina_100ml.png","Línea Profesional", 96],
+["Tratamiento de Keratina VP12 1000 ml",2500,16,"Kit_proteina_1000ml VP12.png","Línea Profesional", 16],
+["Tratamiento de Keratina VP8 1000 ml",2500,16,"Kit_proteina_1000ml.png","Línea Profesional", 16],
+["Shampoo Purificante 1000 ml",416,16,"Shampoo_Purificante_1000ml.png","Línea Profesional", 16],
+["Kit Vereplex 500 ml",1200,24,"kit-vereplex-500.png","Vereplex pro", 24],
+["Kit Vereplex 120 ml",700,24,"Vereplex_No1_120ml.png","Vereplex pro", 24],
+["Vereplex Pro No. 1 500 ml",1100,24,"Vereplex_No1_500ml.png","Vereplex pro", 24],
+["Vereplex Pro No. 2 500 ml",350,24,"Vereplex_No2_500ml.png","Vereplex pro", 24],
+["Kit Vereplex PRO Sachet 30 ml",90,1,"kit-vereplex-sachet-30.png","Vereplex pro", 1],
+["Kit de Mantenimiento 1000 ml",616,16,"Kit_matenimiento_1000ml.png","Línea de Mantenimiento", 16],
+["Kit de Mantenimiento 500 ml",360,36,"Kit_mantenimiento_500ml.png","Línea de Mantenimiento", 36],
+["Kit de Mantenimiento 100 ml",120,96,"Kit_mantenimiento_100ml.png","Línea de Mantenimiento", 96],
+["Shampoo de Mantenimiento 1000 ml",360,16,"Shampoo_Mant_1000ml.png","Línea de Mantenimiento", 16],
+["Acondicionador de Mantenimiento 1000 ml",360,16,"Acondicionador_Mant_1000ml.png","Línea de Mantenimiento", 16],
+["Shampoo de Mantenimiento 500 ml",200,36,"Shampoo_mant_500ml.png","Línea de Mantenimiento", 36],
+["Acondicionador de Mantenimiento 500 ml",200,36,"Acondicionador_Mant_500ml.png","Línea de Mantenimiento", 36],
+["Tratamiento Sérum de Argán 100 ml",280,48,"Trat_SerumArgan_100ml.png","Línea de Mantenimiento", 48],
+["Tratamiento Sérum de Argán 50 ml",120,63,"Trat_SerumArgan_50ml.png","Línea de Mantenimiento", 63],
+["Mascarilla Mágica Nutritiva 500 ml",294,24,"Mascarilla_Magica_500ml.png","Línea de Mantenimiento", 24],
+["Mascarilla Mágica Nutritiva 100 ml",85,96,"Mascarilla_Magica_100ml.png","Línea de Mantenimiento", 96],
+["Tratamiento Leave In 300 ml",200,48,"Trat_LeaveIn_300ml.png","Línea de Mantenimiento", 48],
+["Tratamiento Leave In 100 ml",85,96,"Trat_LeaveIn_100ml.png","Línea de Mantenimiento", 96],
+["Caja Shot de Reparación Instantánea",460,36,"Caja_Ampolletas.png","Línea de Mantenimiento", 36],
+["Shot de Reparación Instantánea 12 ml",80,48,"Shot_Reparacion_12ml.png","Línea de Mantenimiento", 48],
+["Set de Viaje para Cuidado del Cabello",580,10,"Set_de_viaje.png","Línea de Mantenimiento", 10],
+["Crema Hidratante para Rizos 300 ml",190,48,"Crema_Hidratante_Rizos_300ml.png","Hi-Style", 48],
+["Gel Hidratante para Rizos 300 ml",200,48,"ButterGel_Hidratante_Rizos_300ml.png","Hi-Style", 48],
+["Secadora V-Lux Negra",3150,10,"Secadora_V-Lux_Negra.png","Herramientas", 10],
+["Secadora V-Lux Blanca",3150,10,"Secadora_V-Lux_Blanca.png","Herramientas", 10],
+["Plancha de Titanio",1575,15,"Plancha_Titanio.png","Herramientas", 15],
+["Peine de Carbón",42,50,"Peine_Carbon.png","Herramientas", 50],
+["Cepillo Cuadrado",140,12,"Cepillo_Cuadrado.png","Herramientas", 12],
+["Cepillo Redondo",200,10,"Cepillo_Redondo.png","Herramientas", 10],
+["Brocha",42,50,"Brocha.png","Herramientas", 50],
+["Kimono",350,20,"Kimono negro.png","Herramientas", 20]
+];
+
+function cargarChips(){
+const cont = document.getElementById("chips");
+cont.innerHTML = "";
+categorias.forEach(c=>{
+const chip = document.createElement("div");
+chip.className = "chip" + (c === categoriaActual ? " active" : "");
+chip.innerText = c;
+chip.onclick = () => { categoriaActual = c; render(); };
+cont.appendChild(chip);
+});
+}
+
+function render(){
+cargarChips();
+const filtro = document.getElementById("buscador").value.toLowerCase();
+const grid = document.getElementById("productGrid");
+grid.innerHTML = "";
+
+productos.forEach((p,i)=>{
+// p[0]: Nombre, p[1]: Dist, p[2]: Sub, p[3]: Img, p[4]: Categoria, p[5]: Piezas por caja
+if(categoriaActual !== "Todos" && p[4] !== categoriaActual) return;
+if(filtro && !p[0].toLowerCase().includes(filtro)) return;
+
+const cantPzas = window["cant"+i] || 0;
+const cantCajas = window["caja"+i] || 0;
+const card = document.createElement("div");
+card.className = "product-card" + ((cantPzas > 0 || cantCajas > 0) ? " active" : "");
+card.id = "card"+i;
+card.innerHTML = `
+<img class="product-img" src="${p[3]}" alt="${p[0]}">
+<div class="product-info">
+<div class="product-name">${p[0]}</div>
+<div class="product-prices">Dist. $${p[1]} · Sub. $${p[2]}</div>
+<span class="product-tag" id="tag${i}">-</span>
+<div class="qty-group" style="margin-top:8px;">
+<div class="qty-box">
+<input type="number" min="0" value="${cantPzas}" id="cantidad${i}" oninput="calcular()">
+<div class="qty-label">piezas</div>
+</div>
+<div class="qty-box">
+<input type="number" min="0" value="${cantCajas}" id="cajasInput${i}" oninput="calcular()">
+<div class="qty-label">cajas</div>
+</div>
+</div>
+<div class="importe-tag">$<span id="importe${i}">0.00</span></div>
+</div>`;
+grid.appendChild(card);
+});
+
+calcular();
+}
+
+function calcular(){
+let total = 0;
+let resumenHTML = "";
+
+productos.forEach((p,i)=>{
+const cantEl = document.getElementById(`cantidad${i}`);
+const cajaEl = document.getElementById(`cajasInput${i}`);
+if(!cantEl || !cajaEl) return;
+
+let cantPzas = Number(cantEl.value) || 0;
+let cantCajas = Number(cajaEl.value) || 0;
+window["cant"+i] = cantPzas;
+window["caja"+i] = cantCajas;
+
+let piezasPorCaja = p[5];
+let totalPiezas = cantPzas + (cantCajas * piezasPorCaja);
+let importe = 0;
+let precioAplicado = "";
+let descuentoTexto = "";
+
+if(totalPiezas >= piezasPorCaja){
+importe = totalPiezas * p[1];
+precioAplicado = "Distribuidor";
+}else{
+importe = totalPiezas * p[2];
+precioAplicado = "Subdistribuidor";
+if(p[4] === "Línea de Mantenimiento" && totalPiezas > 0){
+importe = importe * 0.90;
+descuentoTexto = " con 10% desc.";
+}
+}
+
+const importeEl = document.getElementById(`importe${i}`);
+if(importeEl) importeEl.innerText = importe.toFixed(2);
+
+const tag = document.getElementById(`tag${i}`);
+const card = document.getElementById(`card${i}`);
+if(tag && card){
+if(totalPiezas > 0){
+tag.className = "product-tag " + (precioAplicado === "Distribuidor" ? "tag-dist" : "tag-sub");
+tag.innerText = precioAplicado + (descuentoTexto ? " · 10% desc." : "");
+card.classList.add("active");
+}else{
+tag.className = "product-tag";
+tag.innerText = "-";
+card.classList.remove("active");
+}
+}
+
+if(totalPiezas > 0){
+resumenHTML += `
+<div class="item" style="display: flex; justify-content: space-between; align-items: center;">
+<div>
+<strong>${p[0]}</strong><br>
+Piezas: ${cantPzas} | Cajas: ${cantCajas} | Total piezas: ${totalPiezas}<br>
+Precio aplicado: ${precioAplicado}${descuentoTexto} | Total: $${importe.toFixed(2)}
+</div>
+<button onclick="eliminarItem('prod', ${i})" style="background:#ff4d4d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; font-size:12px; margin-left:10px; flex-shrink:0;" title="Quitar">×</button>
+</div>`;
+}
+
+total += importe;
+});
+
+if(resumenHTML === ""){
+resumenHTML = '<div class="vacio">No hay productos seleccionados.</div>';
+}
+
+let reembolso = total > metaReembolso ? total - metaReembolso : 0;
+
+document.getElementById("total").innerText = total.toFixed(2);
+document.getElementById("totalArriba").innerText = total.toFixed(2);
+document.getElementById("reembolsoArriba").innerText = reembolso.toFixed(2);
+document.getElementById("resumenPedido").innerHTML = resumenHTML;
+}
+
+function eliminarItem(tipo, index){
+if(tipo === 'prod'){
+window["cant"+index] = 0;
+window["caja"+index] = 0;
+let pInput = document.getElementById(`cantidad${index}`);
+let cInput = document.getElementById(`cajasInput${index}`);
+if(pInput) pInput.value = 0;
+if(cInput) cInput.value = 0;
+}
+calcular();
+}
+
+function enviarWhatsapp(){
+let socio = document.getElementById("socio").value;
+let fecha = document.getElementById("fecha").value;
+let total = document.getElementById("total").innerText;
+let reembolso = document.getElementById("reembolsoArriba").innerText;
+
+let mensaje = `*Hola, quiero realizar este pedido Verenize:*%0A%0A`;
+mensaje += `*Socio comercial:* ${socio}%0A`;
+mensaje += `*Fecha de pedido:* ${fecha}%0A%0A`;
+
+productos.forEach((p,i)=>{
+let cantPzas = window["cant"+i] || 0;
+let cantCajas = window["caja"+i] || 0;
+let piezasPorCaja = p[5];
+let totalPiezas = cantPzas + (cantCajas * piezasPorCaja);
+
+if(totalPiezas > 0){
+let importe = totalPiezas >= piezasPorCaja ? totalPiezas * p[1] : totalPiezas * p[2] * (p[4] === "Línea de Mantenimiento" ? 0.9 : 1);
+mensaje += `*Producto:* ${p[0]}%0A`;
+mensaje += `*Piezas capturadas:* ${cantPzas}%0A`;
+mensaje += `*Cajas capturadas:* ${cantCajas}%0A`;
+mensaje += `*Total piezas:* ${totalPiezas}%0A`;
+mensaje += `*Importe:* $${importe.toFixed(2)}%0A%0A`;
+}
+});
+
+mensaje += `*TOTAL ACUMULADO:* $${total}%0A`;
+mensaje += `*TOTAL REEMBOLSO:* $${reembolso}%0A%0A`;
+
+window.open(`https://wa.me/${whatsapp}?text=${mensaje}`,"_blank");
+}
+
+function limpiar(){
+if(!confirm("¿Seguro que quieres limpiar todo el pedido? Esta acción no se puede deshacer.")) return;
+productos.forEach((p,i)=>{
+window["cant"+i] = 0;
+window["caja"+i] = 0;
+});
+document.getElementById("buscador").value = "";
+document.getElementById("socio").value = "";
+document.getElementById("fecha").valueAsDate = new Date();
+categoriaActual = "Todos";
+render();
+}
+
+document.getElementById("fecha").valueAsDate = new Date();
+render();
+</script>
+</body>
+</html>
