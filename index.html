@@ -281,10 +281,16 @@ grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
 </div>
 
 <div class="search-wrap">
-<input type="text" id="buscador" class="buscador" placeholder="Buscar producto..." oninput="render()">
+<input type="text" id="buscador" class="buscador" placeholder="Buscar producto o promoción..." oninput="render()">
 </div>
 
 <div class="chips" id="chips"></div>
+
+<!-- Sección de Promociones -->
+<div id="promosSection">
+<div class="section-title">✨ Promociones especiales</div>
+<div class="product-list" id="promoGrid"></div>
+</div>
 
 <div id="productosSection">
 <div class="section-title">Productos</div>
@@ -308,8 +314,14 @@ grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
 const whatsapp = "526622953102";
 const metaReembolso = 104400;
 
-const categorias = ["Todos","Línea Profesional","Vereplex pro","Línea de Mantenimiento","Hi-Style","Herramientas"];
+const categorias = ["Todos","Promos","Línea Profesional","Vereplex pro","Línea de Mantenimiento","Hi-Style","Herramientas"];
 let categoriaActual = "Todos";
+
+/* Promociones como productos interactivos */
+const promociones = [
+["✨ Trío de Reparación Especial (Mascarilla 500ml + Sérum 100ml + Leave In 300ml)", 999, "Trat_LeaveIn_300ml.png", "Promos"],
+["🔥 Profesionales de la Belleza (4 Trat. 300ml + 4 Shampoos 300ml + Brocha + Peine)", 4500, "Kit_proteina_300ml.png", "Promos"]
+];
 
 /* Estructura simplificada: [nombre, precio, imagen, categoria] */
 const productos = [
@@ -364,9 +376,47 @@ cont.appendChild(chip);
 function render(){
 cargarChips();
 const filtro = document.getElementById("buscador").value.toLowerCase();
-const grid = document.getElementById("productGrid");
-grid.innerHTML = "";
+const promoGrid = document.getElementById("promoGrid");
+const productGrid = document.getElementById("productGrid");
+const promosSec = document.getElementById("promosSection");
+const prodSec = document.getElementById("productosSection");
 
+promoGrid.innerHTML = "";
+productGrid.innerHTML = "";
+
+let mostrarPromos = (categoriaActual === "Todos" || categoriaActual === "Promos");
+let mostrarProductos = (categoriaActual === "Todos" || categoriaActual !== "Promos");
+
+// Renderizar Promociones
+if(mostrarPromos){
+promociones.forEach((p,i)=>{
+if(filtro && !p[0].toLowerCase().includes(filtro)) return;
+const cantPzas = window["cantPromo"+i] || 0;
+const card = document.createElement("div");
+card.className = "product-card" + (cantPzas > 0 ? " active" : "");
+card.id = "cardPromo"+i;
+card.innerHTML = `
+<img class="product-img" src="${p[2]}" alt="${p[0]}">
+<div class="product-info">
+<div class="product-name">${p[0]}</div>
+<div class="product-prices">Precio Promo: $${p[1]}</div>
+<div class="qty-group">
+<div class="qty-box">
+<input type="number" min="0" value="${cantPzas}" id="cantidadPromo${i}" oninput="calcular()">
+<div class="qty-label">piezas</div>
+</div>
+</div>
+<div class="importe-tag">$<span id="importePromo${i}">0.00</span></div>
+</div>`;
+promoGrid.appendChild(card);
+});
+promosSec.style.display = promoGrid.children.length > 0 ? "block" : "none";
+} else {
+promosSec.style.display = "none";
+}
+
+// Renderizar Productos
+if(mostrarProductos){
 productos.forEach((p,i)=>{
 if(categoriaActual !== "Todos" && p[3] !== categoriaActual) return;
 if(filtro && !p[0].toLowerCase().includes(filtro)) return;
@@ -388,8 +438,12 @@ card.innerHTML = `
 </div>
 <div class="importe-tag">$<span id="importe${i}">0.00</span></div>
 </div>`;
-grid.appendChild(card);
+productGrid.appendChild(card);
 });
+prodSec.style.display = productGrid.children.length > 0 ? "block" : "none";
+} else {
+prodSec.style.display = "none";
+}
 
 calcular();
 }
@@ -398,21 +452,28 @@ function calcular(){
 let subtotalGeneral = 0;
 let itemsCalculados = [];
 
-// Paso 1: Calcular subtotales individuales por producto
+// Calcular promos
+promociones.forEach((p,i)=>{
+const cantEl = document.getElementById(`cantidadPromo${i}`);
+if(!cantEl) return;
+let cantPzas = Number(cantEl.value) || 0;
+window["cantPromo"+i] = cantPzas;
+let importe = cantPzas * p[1];
+subtotalGeneral += importe;
+itemsCalculados.push({ tipo: 'promo', p, i, cantPzas, importe });
+});
+
+// Calcular productos
 productos.forEach((p,i)=>{
 const cantEl = document.getElementById(`cantidad${i}`);
 if(!cantEl) return;
-
 let cantPzas = Number(cantEl.value) || 0;
 window["cant"+i] = cantPzas;
-
 let importe = cantPzas * p[1];
 subtotalGeneral += importe;
-
-itemsCalculados.push({ p, i, cantPzas, importe });
+itemsCalculados.push({ tipo: 'prod', p, i, cantPzas, importe });
 });
 
-// Paso 2: Verificar si aplica el 15% de descuento general (si el subtotal pasa de 3500)
 let aplicaDescuentoGeneral = subtotalGeneral > 3500;
 let total = 0;
 let resumenHTML = "";
@@ -421,6 +482,7 @@ itemsCalculados.forEach(item => {
 let importeFinal = item.importe;
 let descGeneralTexto = "";
 
+// El descuento general aplica a productos normales o según desees (aquí aplica si supera 3500)
 if (aplicaDescuentoGeneral && item.cantPzas > 0) {
 importeFinal = item.importe * 0.85;
 descGeneralTexto = " (15% desc. gral)";
@@ -428,15 +490,21 @@ descGeneralTexto = " (15% desc. gral)";
 
 total += importeFinal;
 
+if(item.tipo === 'promo'){
+const importeEl = document.getElementById(`importePromo${item.i}`);
+if(importeEl) importeEl.innerText = importeFinal.toFixed(2);
+const card = document.getElementById(`cardPromo${item.i}`);
+if(card){
+if(item.cantPzas > 0) card.classList.add("active");
+else card.classList.remove("active");
+}
+} else {
 const importeEl = document.getElementById(`importe${item.i}`);
 if(importeEl) importeEl.innerText = importeFinal.toFixed(2);
-
 const card = document.getElementById(`card${item.i}`);
 if(card){
-if(item.cantPzas > 0){
-card.classList.add("active");
-}else{
-card.classList.remove("active");
+if(item.cantPzas > 0) card.classList.add("active");
+else card.classList.remove("active");
 }
 }
 
@@ -447,7 +515,7 @@ resumenHTML += `
 <strong>${item.p[0]}</strong><br>
 Piezas: ${item.cantPzas} | Total: $${importeFinal.toFixed(2)}${descGeneralTexto}
 </div>
-<button onclick="eliminarItem('prod', ${item.i})" style="background:#ff4d4d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; font-size:12px; margin-left:10px; flex-shrink:0;" title="Quitar">×</button>
+<button onclick="eliminarItem('${item.tipo}', ${item.i})" style="background:#ff4d4d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; font-size:12px; margin-left:10px; flex-shrink:0;" title="Quitar">×</button>
 </div>`;
 }
 });
@@ -465,7 +533,11 @@ document.getElementById("resumenPedido").innerHTML = resumenHTML;
 }
 
 function eliminarItem(tipo, index){
-if(tipo === 'prod'){
+if(tipo === 'promo'){
+window["cantPromo"+index] = 0;
+let pInput = document.getElementById(`cantidadPromo${index}`);
+if(pInput) pInput.value = 0;
+} else if(tipo === 'prod'){
 window["cant"+index] = 0;
 let pInput = document.getElementById(`cantidad${index}`);
 if(pInput) pInput.value = 0;
@@ -483,14 +555,28 @@ mensaje += `*Nombre estilista:* ${estilista}%0A`;
 mensaje += `*Fecha:* ${fecha}%0A%0A`;
 
 let subtotalCalculo = 0;
+promociones.forEach((p,i)=>{
+let cantPzas = window["cantPromo"+i] || 0;
+if(cantPzas > 0) subtotalCalculo += cantPzas * p[1];
+});
 productos.forEach((p,i)=>{
 let cantPzas = window["cant"+i] || 0;
-if(cantPzas > 0){
-subtotalCalculo += cantPzas * p[1];
-}
+if(cantPzas > 0) subtotalCalculo += cantPzas * p[1];
 });
 
 let aplicaDescGral = subtotalCalculo > 3500;
+
+promociones.forEach((p,i)=>{
+let cantPzas = window["cantPromo"+i] || 0;
+if(cantPzas > 0){
+let importe = cantPzas * p[1];
+if(aplicaDescGral) importe = importe * 0.85;
+
+mensaje += `*Promoción:* ${p[0]}%0A`;
+mensaje += `*Piezas:* ${cantPzas}%0A`;
+mensaje += `*Importe:* $${importe.toFixed(2)}%0A%0A`;
+}
+});
 
 productos.forEach((p,i)=>{
 let cantPzas = window["cant"+i] || 0;
@@ -512,9 +598,8 @@ window.open(`https://wa.me/${whatsapp}?text=${mensaje}`,"_blank");
 
 function limpiar(){
 if(!confirm("¿Seguro que quieres limpiar todo el pedido? Esta acción no se puede deshacer.")) return;
-productos.forEach((p,i)=>{
-window["cant"+i] = 0;
-});
+promociones.forEach((p,i)=>{ window["cantPromo"+i] = 0; });
+productos.forEach((p,i)=>{ window["cant"+i] = 0; });
 document.getElementById("buscador").value = "";
 document.getElementById("estilista").value = "";
 document.getElementById("fecha").valueAsDate = new Date();
