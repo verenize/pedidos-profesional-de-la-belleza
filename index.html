@@ -271,6 +271,7 @@ grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
 <div class="label">Total acumulado</div>
 <div class="amount">$<span id="totalArriba">0.00</span></div>
 </div>
+</div>
 
 <div class="search-wrap">
 <input type="text" id="buscador" class="buscador" placeholder="Buscar producto o promoción..." oninput="render()">
@@ -440,74 +441,90 @@ calcular();
 }
 
 function calcular(){
-let subtotalGeneral = 0;
-let itemsCalculados = [];
+// 1. Primer ciclo para calcular el subtotal bruto (sin descuento) y saber si supera los $8,000
+let subtotalBruto = 0;
 
-// Calcular promos
 promociones.forEach((p,i)=>{
 const cantEl = document.getElementById(`cantidadPromo${i}`);
-if(!cantEl) return;
+if(cantEl) {
 let cantPzas = Number(cantEl.value) || 0;
 window["cantPromo"+i] = cantPzas;
-let importe = cantPzas * p[1];
-subtotalGeneral += importe;
-itemsCalculados.push({ tipo: 'promo', p, i, cantPzas, importe });
+subtotalBruto += cantPzas * p[1];
+}
 });
 
-// Calcular productos
 productos.forEach((p,i)=>{
 const cantEl = document.getElementById(`cantidad${i}`);
-if(!cantEl) return;
+if(cantEl) {
 let cantPzas = Number(cantEl.value) || 0;
 window["cant"+i] = cantPzas;
-let importe = cantPzas * p[1];
-subtotalGeneral += importe;
-itemsCalculados.push({ tipo: 'prod', p, i, cantPzas, importe });
+subtotalBruto += cantPzas * p[1];
+}
 });
 
-let aplicaDescuentoGeneral = subtotalGeneral > 3500;
+// Condición: Si la nota supera los $8,000 pesos
+let aplicaDescuentoKeratina = subtotalBruto > 8000;
+
+// 2. Segundo ciclo para calcular importes finales aplicando la regla de descuento al Kit de Keratina 1000ml (índice 0)
 let total = 0;
 let resumenHTML = "";
 
-itemsCalculados.forEach(item => {
-let importeFinal = item.importe;
-let descGeneralTexto = "";
+promociones.forEach((p,i)=>{
+let cantPzas = window["cantPromo"+i] || 0;
+let importe = cantPzas * p[1];
+total += importe;
 
-// El descuento general aplica a productos normales o según desees (aquí aplica si supera 3500)
-if (aplicaDescuentoGeneral && item.cantPzas > 0) {
-importeFinal = item.importe * 0.85;
-descGeneralTexto = " (15% desc. gral)";
-}
+if(cantPzas > 0){
+const importeEl = document.getElementById(`importePromo${i}`);
+if(importeEl) importeEl.innerText = importe.toFixed(2);
+const card = document.getElementById(`cardPromo${i}`);
+if(card) card.classList.add("active");
 
-total += importeFinal;
-
-if(item.tipo === 'promo'){
-const importeEl = document.getElementById(`importePromo${item.i}`);
-if(importeEl) importeEl.innerText = importeFinal.toFixed(2);
-const card = document.getElementById(`cardPromo${item.i}`);
-if(card){
-if(item.cantPzas > 0) card.classList.add("active");
-else card.classList.remove("active");
-}
-} else {
-const importeEl = document.getElementById(`importe${item.i}`);
-if(importeEl) importeEl.innerText = importeFinal.toFixed(2);
-const card = document.getElementById(`card${item.i}`);
-if(card){
-if(item.cantPzas > 0) card.classList.add("active");
-else card.classList.remove("active");
-}
-}
-
-if(item.cantPzas > 0){
 resumenHTML += `
 <div class="item" style="display: flex; justify-content: space-between; align-items: center;">
 <div>
-<strong>${item.p[0]}</strong><br>
-Piezas: ${item.cantPzas} | Total: $${importeFinal.toFixed(2)}${descGeneralTexto}
+<strong>${p[0]}</strong><br>
+Piezas: ${cantPzas} | Total: $${importe.toFixed(2)}
 </div>
-<button onclick="eliminarItem('${item.tipo}', ${item.i})" style="background:#ff4d4d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; font-size:12px; margin-left:10px; flex-shrink:0;" title="Quitar">×</button>
+<button onclick="eliminarItem('promo', ${i})" style="background:#ff4d4d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; font-size:12px; margin-left:10px; flex-shrink:0;" title="Quitar">×</button>
 </div>`;
+} else {
+const card = document.getElementById(`cardPromo${i}`);
+if(card) card.classList.remove("active");
+}
+});
+
+productos.forEach((p,i)=>{
+let cantPzas = window["cant"+i] || 0;
+let precioUnitario = p[1];
+let descTexto = "";
+
+// Aplicar 15% de descuento solo al Kit de Keratina Brasileña 1000 ml (índice 0) si supera $8,000
+if(i === 0 && aplicaDescuentoKeratina && cantPzas > 0){
+precioUnitario = p[1] * 0.85; // 4500 * 0.85 = 3825
+descTexto = " (15% desc. por nota > $8,000)";
+}
+
+let importe = cantPzas * precioUnitario;
+total += importe;
+
+if(cantPzas > 0){
+const importeEl = document.getElementById(`importe${i}`);
+if(importeEl) importeEl.innerText = importe.toFixed(2);
+const card = document.getElementById(`card${i}`);
+if(card) card.classList.add("active");
+
+resumenHTML += `
+<div class="item" style="display: flex; justify-content: space-between; align-items: center;">
+<div>
+<strong>${p[0]}</strong><br>
+Piezas: ${cantPzas} | Total: $${importe.toFixed(2)}${descTexto}
+</div>
+<button onclick="eliminarItem('prod', ${i})" style="background:#ff4d4d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; font-size:12px; margin-left:10px; flex-shrink:0;" title="Quitar">×</button>
+</div>`;
+} else {
+const card = document.getElementById(`card${i}`);
+if(card) card.classList.remove("active");
 }
 });
 
@@ -542,24 +559,23 @@ let mensaje = `*Te paso cotización:*✧ %0A%0A`;
 mensaje += `*Nombre estilista:* ${estilista}%0A`;
 mensaje += `*Fecha:* ${fecha}%0A%0A`;
 
-let subtotalCalculo = 0;
+// Recalcular subtotal bruto para verificar condición en WhatsApp
+let subtotalBruto = 0;
 promociones.forEach((p,i)=>{
 let cantPzas = window["cantPromo"+i] || 0;
-if(cantPzas > 0) subtotalCalculo += cantPzas * p[1];
+subtotalBruto += cantPzas * p[1];
 });
 productos.forEach((p,i)=>{
 let cantPzas = window["cant"+i] || 0;
-if(cantPzas > 0) subtotalCalculo += cantPzas * p[1];
+subtotalBruto += cantPzas * p[1];
 });
 
-let aplicaDescGral = subtotalCalculo > 3500;
+let aplicaDescKeratinaWp = subtotalBruto > 8000;
 
 promociones.forEach((p,i)=>{
 let cantPzas = window["cantPromo"+i] || 0;
 if(cantPzas > 0){
 let importe = cantPzas * p[1];
-if(aplicaDescGral) importe = importe * 0.85;
-
 mensaje += `*Promoción:* ${p[0]}%0A`;
 mensaje += `*Piezas:* ${cantPzas}%0A`;
 mensaje += `*Importe:* $${importe.toFixed(2)}%0A%0A`;
@@ -569,8 +585,11 @@ mensaje += `*Importe:* $${importe.toFixed(2)}%0A%0A`;
 productos.forEach((p,i)=>{
 let cantPzas = window["cant"+i] || 0;
 if(cantPzas > 0){
-let importe = cantPzas * p[1];
-if(aplicaDescGral) importe = importe * 0.85;
+let precioUnitario = p[1];
+if(i === 0 && aplicaDescKeratinaWp){
+precioUnitario = p[1] * 0.85;
+}
+let importe = cantPzas * precioUnitario;
 
 mensaje += `*Producto:* ${p[0]}%0A`;
 mensaje += `*Piezas:* ${cantPzas}%0A`;
@@ -579,7 +598,9 @@ mensaje += `*Importe:* $${importe.toFixed(2)}%0A%0A`;
 });
 
 mensaje += `*TOTAL ACUMULADO:* $${total}%0A`;
-if(aplicaDescGral) mensaje += `*(Incluye 15% de descuento por compra mayor a $3,500)*%0A`;
+if(aplicaDescKeratinaWp){
+mensaje += `*(Incluye 15% de descuento en Kit de Keratina 1000ml por compra mayor a $8,000)*%0A`;
+}
   
 window.open(`https://wa.me/${whatsapp}?text=${mensaje}`,"_blank");
 }
